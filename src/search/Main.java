@@ -22,15 +22,35 @@ public class Main {
     System.out.println(searchArray(-45, numbers));
   }
 
+  /*
+  * modified searhArray from original code to see if ThreadedSearch is working (i.e. is faster than LinearSearch and
+  * outputs correct answer.
+  *
+  * It seems to be working and is always faster than or the same speed as LinearSearch
+   */
   private static boolean searchArray(int target, ArrayList<Integer> list) throws InterruptedException {
-    // You can replace ThreadedSearch with LinearSearch to see this work with
-    // the given linear search code.
     ThreadedSearch<Integer> searcher=new ThreadedSearch<Integer>();
-    // This specifies 4 threads for the tests. It would be a good idea to play
-    // with this and see how that changes things. Keep in mind that your number
-    // of threads *may* need to evenly divide the length of the list being
-    // searched (ARRAY_SIZE in this case).
-    return searcher.parSearch(4, target, list);
+    LinearSearch<Integer> linSearcher = new LinearSearch<Integer>();
+
+    long threadTime = System.currentTimeMillis();
+    boolean threadRes = searcher.parSearch(4, target, list);
+    threadTime = System.currentTimeMillis() - threadTime;
+
+    long linTime = System.currentTimeMillis();
+    boolean linRes = linSearcher.search(target, list);
+    linTime = System.currentTimeMillis() - linTime;
+
+    if(linRes == threadRes){
+      System.out.println("With Target = " + target + ", linear and threaded searches returned the same result: " + linRes);
+      System.out.println("Linear search took   " + linTime + "ms");
+      System.out.println("Threaded search took " + threadTime + "ms");
+      System.out.println();
+    } else {
+      System.out.println("Results differ");
+      System.out.println();
+    }
+
+    return threadRes;
   }
 
 }

@@ -1,25 +1,16 @@
 package search;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class ThreadedSearch<T> implements Runnable {
+public class ThreadedSearch<T> {
 
-  private T target;
-  private ArrayList<T> list;
-  private int begin;
-  private int end;
-  private Answer answer;
+//  private T target;
+//  private ArrayList<T> list;
+//  private int begin;
+//  private int end;
+//  private Answer answer;
 
-  public ThreadedSearch() {
-  }
-
-  private ThreadedSearch(T target, ArrayList<T> list, int begin, int end, Answer answer) {
-    this.target=target;
-    this.list=list;
-    this.begin=begin;
-    this.end=end;
-    this.answer=answer;
-  }
 
   /**
   * Searches `list` in parallel using `numThreads` threads.
@@ -47,11 +38,41 @@ public class ThreadedSearch<T> implements Runnable {
     * threads, wait for them to all terminate, and then return the answer
     * in the shared `Answer` instance.
     */
-    return false;
+    Answer answer = new Answer();
+    int intervalSize = list.size() / numThreads;
+    Thread[] threads = new Thread[numThreads];
+
+    for (int i = 0; i < numThreads; i++) {
+      List subList = list.subList(i * intervalSize, (i + 1) * intervalSize);
+      threads[i] = new SearchThread<T>(target, answer, subList);
+      threads[i].start();
+    }
+
+    for(Thread thread: threads){
+      thread.join();
+    }
+
+    return answer.getAnswer();
   }
 
-  public void run() {
+  private class SearchThread<T> extends Thread {
+    private T target;
+    private Answer answer;
+    private List<T> list;
 
+    public SearchThread(T target, Answer answer, List<T> list){
+      this.target = target;
+      this.answer = answer;
+      this.list = list;
+    }
+
+    public void run(){
+      for (T element: list){
+        if (element.equals(target)){
+          answer.setAnswer(true);
+        }
+      }
+    }
   }
 
   private class Answer {
