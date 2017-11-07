@@ -3,15 +3,12 @@ package search;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ * NOTE: Creating multiple instances of this class inside of itself weirded me out so I made a subclass for the threads
+ * and did all the work in that. Then there was no need for this class to be Runnable in itself so I took that out.
+ */
+
 public class ThreadedSearch<T> {
-
-//  private T target;
-//  private ArrayList<T> list;
-//  private int begin;
-//  private int end;
-//  private Answer answer;
-
-
   /**
   * Searches `list` in parallel using `numThreads` threads.
   *
@@ -24,25 +21,18 @@ public class ThreadedSearch<T> {
     * will all have access to this one shared instance of `Answer`, where
     * they can update the `answer` field inside that instance.
     *
-    * Then construct `numThreads` instances of this class (`ThreadedSearch`)
-    * using the 5 argument constructor for the class. You'll hand each of
-    * them the same `target`, `list`, and `answer`. What will be different
-    * about each instance is their `begin` and `end` values, which you'll
-    * use to give each instance the "job" of searching a different segment
-    * of the list. If, for example, the list has length 100 and you have
-    * 4 threads, you would give the four threads the ranges [0, 25), [25, 50),
-    * [50, 75), and [75, 100) as their sections to search.
-    *
-    * You then construct `numThreads`, each of which is given a different
-    * instance of this class as its `Runnable`. Then start each of those
+    * Then construct numThreads instances of  SearchThread and start them to begin searching for target. Each
+    * SearchThread is given a sublishis class as its `Runnable`. Then start each of those
     * threads, wait for them to all terminate, and then return the answer
-    * in the shared `Answer` instance.
+    * in the shared `Answer` instancest of list of which the union is list and are all pairwise disjoint. Then we wait for
+    * all threads to finish with join and return the answer with answer.getAnswer().
     */
     Answer answer = new Answer();
     int intervalSize = list.size() / numThreads;
     Thread[] threads = new Thread[numThreads];
 
     for (int i = 0; i < numThreads; i++) {
+      // Giving each thread its one list is easier than messing with start/end indices, but is equivalent.
       List subList = list.subList(i * intervalSize, (i + 1) * intervalSize);
       threads[i] = new SearchThread<T>(target, answer, subList);
       threads[i].start();
@@ -55,6 +45,7 @@ public class ThreadedSearch<T> {
     return answer.getAnswer();
   }
 
+  // The thread class
   private class SearchThread<T> extends Thread {
     private T target;
     private Answer answer;
@@ -66,10 +57,12 @@ public class ThreadedSearch<T> {
       this.list = list;
     }
 
+    // Very straight forward linear search. If we find the target, set the answer to true and finish.
     public void run(){
       for (T element: list){
         if (element.equals(target)){
           answer.setAnswer(true);
+          break;
         }
       }
     }
