@@ -9,6 +9,17 @@ import java.util.List;
  */
 
 public class ThreadedSearch<T> {
+  public Answer answer;
+  public ThreadedSearch(){
+    this.answer = new Answer(false);
+  }
+
+  public int getCount(){
+    return answer.getCounted();
+  }
+  public void setCount(){
+    answer.counted = 0;
+  }
   /**
   * Searches `list` in parallel using `numThreads` threads.
   *
@@ -27,14 +38,11 @@ public class ThreadedSearch<T> {
     * in the shared `Answer` instancest of list of which the union is list and are all pairwise disjoint. Then we wait for
     * all threads to finish with join and return the answer with answer.getAnswer().
     */
-    Answer answer = new Answer();
     int intervalSize = list.size() / numThreads;
     Thread[] threads = new Thread[numThreads];
 
     for (int i = 0; i < numThreads; i++) {
-      // Giving each thread its one list is easier than messing with start/end indices, but is equivalent.
-      List subList = list.subList(i * intervalSize, (i + 1) * intervalSize);
-      threads[i] = new SearchThread<T>(target, answer, subList);
+      threads[i] = new SearchThread<T>(target, answer, list, i * intervalSize, (i + 1) * intervalSize);
       threads[i].start();
     }
 
@@ -49,19 +57,26 @@ public class ThreadedSearch<T> {
   private class SearchThread<T> extends Thread {
     private T target;
     private Answer answer;
-    private List<T> list;
+    private ArrayList<T> list;
+    private int start;
+    private int end;
 
-    public SearchThread(T target, Answer answer, List<T> list){
+    public SearchThread(T target, Answer answer, ArrayList<T> list, int start, int end){
       this.target = target;
       this.answer = answer;
       this.list = list;
+      this.start = start;
+      this.end = end;
     }
 
     // Very straight forward linear search. If we find the target, set the answer to true and finish.
     public void run(){
-      for (T element: list){
-        if (element.equals(target)){
+      for (int i = start; i < end; i ++){
+        answer.counted++;
+        if (list.get(i).equals(target)){
           answer.setAnswer(true);
+          break;
+        } else if (answer.getAnswer()){
           break;
         }
       }
@@ -69,7 +84,17 @@ public class ThreadedSearch<T> {
   }
 
   private class Answer {
-    private boolean answer = false;
+    private boolean answer;
+    public int counted;
+
+    public Answer(boolean answer){
+      this.counted = 0;
+      this.answer = answer;
+    }
+
+    public int getCounted(){
+      return counted;
+    }
 
     public boolean getAnswer() {
       return answer;
@@ -77,6 +102,8 @@ public class ThreadedSearch<T> {
 
     // This has to be synchronized to ensure that no two threads modify
     // this at the same time, possibly causing race conditions.
+    // Note: Race conditions irrelevant as any thread should only ever modify answer to true, so no conflicts are
+    // possible.
     public synchronized void setAnswer(boolean newAnswer) {
       answer = newAnswer;
     }

@@ -6,7 +6,7 @@ import java.util.Random;
 public class Main {
 
   public static void main(String[] args) throws InterruptedException {
-    final int ARRAY_SIZE = 10000;
+    final int ARRAY_SIZE = 1000000;
     Random random = new Random();
     ArrayList<Integer> numbers = new ArrayList<Integer>();
     for (int i=0; i<ARRAY_SIZE; ++i) {
@@ -24,9 +24,9 @@ public class Main {
 
   /*
   * modified searhArray from original code to see if ThreadedSearch is working (i.e. is faster than LinearSearch and
-  * outputs correct answer.
+  * outputs correct answer).
   *
-  * It seems to be working and is always faster than or the same speed as LinearSearch
+  * It seems to be correct but is typically slower than LinearSearch
    */
   private static boolean searchArray(int target, ArrayList<Integer> list) throws InterruptedException {
     ThreadedSearch<Integer> searcher=new ThreadedSearch<Integer>();
@@ -35,15 +35,20 @@ public class Main {
     long threadTime = System.currentTimeMillis();
     boolean threadRes = searcher.parSearch(4, target, list);
     threadTime = System.currentTimeMillis() - threadTime;
+    int threadCount = searcher.getCount();
+
+    searcher.setCount();
 
     long linTime = System.currentTimeMillis();
-    boolean linRes = linSearcher.search(target, list);
+    boolean linRes = searcher.parSearch(1,target, list);
     linTime = System.currentTimeMillis() - linTime;
 
     if(linRes == threadRes){
       System.out.println("With Target = " + target + ", linear and threaded searches returned the same result: " + linRes);
       System.out.println("Linear search took   " + linTime + "ms");
+      System.out.println(searcher.getCount());
       System.out.println("Threaded search took " + threadTime + "ms");
+      System.out.println(threadCount);
       System.out.println();
     } else {
       System.out.println("Results differ");
